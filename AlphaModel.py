@@ -1,35 +1,9 @@
 import numpy as np
 import scipy.integrate as integrate
 
-# Parameters in MHz
-# l=[]
-# for n in range(0,50):
-# print(fitsopen_no_absorb(n,bg)[40:50,110:120])
-# l.append(np.mean(fitsopen_no_absorb(n,bg)[40:50,110:120]))
-# counts=np.mean(l)
-counts = 1.1
-texp = 30
-nbin = 1
-Omega_p = 2.392 * np.sqrt(counts / texp) / nbin
-Omega_c = 3.9
-gamma_eg = 0.030
-gamma_gr = 0.030
-Gamma_e = 6.02
-C_3 = 7032
-C_6 = 513000
-Q_E = 0.44
 
-cross_section = 0.78 * 0.78  # um^2
-n_0 = 0.5 * 10 ** (-1)  # 1/um^3 = 10^12 1/cm^3 = 10^18 1/m^3
-sigma_z = 60  # um
-
-N_i = 1  # number of impuritíes
-sigma_r = 4  # read noise
-
-
-class AlphaModel():
+class AlphaModel:
     def __init__(self, Omega_p, Omega_c, gamma_eg, gamma_gr, Gamma_e, Q_E, n_0, sigma_z, sigma_r, C_3, C_6, N_i):
-        print('hi')
         self.Omega_p = Omega_p
         self.Omega_c = Omega_c
         self.gamma_eg = gamma_eg
@@ -105,7 +79,7 @@ class AlphaModel():
             try:
                 zero_crossings[i] = Ns[np.where(np.diff(np.signbit(self_con)))[0]][0] * self.rho_0()
             except:
-                None
+
             i += 1
         # print('zero crossings',zero_crossings)
         return zero_crossings
@@ -124,17 +98,11 @@ class AlphaModel():
                 (self.Gamma_e + self.gamma_eg) ** 2 + 2 * self.Omega_p ** 2 * (
                 self.Gamma_e + self.gamma_eg) / self.Gamma_e)
 
-    # def chi_3_lvl(self):
-    # return self.Gamma_e/(4*np.pi*self.gamma_eg+np.pi*self.Omega_c**2/self.gamma_gr)
-    # def chi_3_lvl(self):
-    # return self.Gamma_e**2/(self.Gamma_e**2+self.Omega_c**2*self.Gamma_e/self.gamma_gr+2*self.Omega_p**2)
-    # def chi_3_lvl(self):
-    # return self.chi_2_lvl()*4*(self.Gamma_e*self.gamma_eg+2*self.Omega_p**2)/(self.Omega_p**2+self.Omega_c**2)/(self.Gamma_e*self.Omega_c**2+self.gamma_eg*self.Omega_p**2)
     def chi_3_lvl(self):
         return 2 * self.gamma_gr / (self.gamma_gr * (self.Gamma_e + self.gamma_eg) + self.Omega_c ** 2)
 
     def integrand(self):
-        return chi_0 * self.ground_state_density() * self.f_ir() * self.chi_2_lvl() * (
+        return self.chi_0 * self.ground_state_density() * self.f_ir() * self.chi_2_lvl() * (
                 (self.chi_3_lvl() / self.chi_2_lvl() + self.f_bl()) / (1 + self.f_bl()) - 1)
 
     def alpha(self):
@@ -155,28 +123,28 @@ class AlphaModel():
 
     def transmission_simple_eit(self):
         return np.e ** (integrate.simps(
-            -self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl_simple()) / (
+            - self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl_simple()) / (
                     1 + self.f_bl_simple()), self.z_grid))
 
     def transmission_eit(self):
         return np.e ** (integrate.simps(
-            -self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
+            - self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
                     1 + self.f_bl()), self.z_grid))
 
     def transmission_single_eit(self):
-        return np.e ** (integrate.simps(-self.chi_0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
+        return np.e ** (integrate.simps(- self.chi_0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
 
     def transmission_2lvl(self):
-        return np.e ** (integrate.simps(-self.chi_0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
+        return np.e ** (integrate.simps(- self.chi_0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
 
     def iterate(self, density):
-        twolvl_list = []
+        self.twolvl_list = []
         self.simple_eit_list = []
         self.single_eit_list = []
         self.eit_list = []
         for n in density:
             self.n_0 = n
-            twolvl_list.append(self.transmission_2lvl())
+            self.twolvl_list.append(self.transmission_2lvl())
             self.simple_eit_list.append(self.transmission_simple_eit())
             self.single_eit_list.append(self.transmission_single_eit())
             self.eit_list.append(self.transmission_eit())
@@ -185,7 +153,6 @@ class AlphaModel():
     def walk(self):
 
         self.step_count += 1
-        # print(self.step_count)
         old_Omega_p = self.Omega_p
         old_Omega_c = self.Omega_c
         old_n_0 = self.n_0
@@ -196,8 +163,6 @@ class AlphaModel():
         self.Omega_p = self.Omega_c * np.random.uniform(0, 1)
         new_count_ratio = self.min_counts_raw() / self.n_counts()
         peak_f_bl = self.rho_0() * self.V_bl_6() * self.n_0
-        # print(old_alpha)
-        # print(self.alpha())
 
         if self.n_0 > 3 * 10 ** (-1) or self.n_0 < 10 ** (-3):
             self.n_0 = old_n_0
@@ -205,14 +170,8 @@ class AlphaModel():
         elif self.Omega_c > 1 * self.Gamma_e or self.Omega_c < 0.01:
             self.Omega_c = old_Omega_c
 
-        # elif new_count_ratio>5000:
-        # self.Omega_c=old_Omega_c
-        # self.n_0=old_n_0
 
-        elif old_count_ratio > new_count_ratio or old_count_ratio > new_count_ratio * np.random.uniform(0,
-                                                                                                        1):  # self
-            # .alpha()<old_alpha or self.alpha()<old_alpha*np.random.uniform(0,1)# and self.min_counts_raw(
-            # )/self.n_counts()<100:
+        elif old_count_ratio > new_count_ratio or old_count_ratio > new_count_ratio * np.random.uniform(0, 1):
             # print("Accept")
             if new_count_ratio < 5000:
                 self.Omega_p_list.append(self.Omega_p)
@@ -225,7 +184,6 @@ class AlphaModel():
                 self.Omega_p_over_c_list.append(self.Omega_p / self.Omega_c)
                 self.peak_f_bl_list.append(peak_f_bl)
                 self.min_counts_over_n_counts.append(1 / new_count_ratio)
-            # self.min_counts_over_n_counts.append(np.log(self.min_counts_raw()/self.n_counts()))
             return None
 
         else:
