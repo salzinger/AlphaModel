@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.integrate as integrate
+
 # Parameters in MHz
 # l=[]
 # for n in range(0,50):
@@ -26,9 +27,9 @@ N_i = 1  # number of impuritíes
 sigma_r = 4  # read noise
 
 
-class alphamodel():
+class AlphaModel():
     def __init__(self, Omega_p, Omega_c, gamma_eg, gamma_gr, Gamma_e, Q_E, n_0, sigma_z, sigma_r, C_3, C_6, N_i):
-
+        print('hi')
         self.Omega_p = Omega_p
         self.Omega_c = Omega_c
         self.gamma_eg = gamma_eg
@@ -42,6 +43,7 @@ class alphamodel():
         self.C_6 = C_6
         self.Q_E = Q_E
         self.z_grid = np.linspace(-200, 200, 401)
+        self.chi_0 = 3 / (2 * np.pi) * 0.78 * 0.78 / (2 * np.pi / 0.78)  # um^3
 
         self.step_count = 0
         self.rejected_values = 0
@@ -91,7 +93,7 @@ class alphamodel():
         zero_crossings = np.zeros(401)
         Ns = np.linspace(1, 200, 200)
         l1 = (self.Omega_p ** 2 + self.Omega_c ** 2) * (
-                    self.Gamma_e * self.Omega_c ** 2 + self.gamma_eg * self.Omega_p ** 2)
+                self.Gamma_e * self.Omega_c ** 2 + self.gamma_eg * self.Omega_p ** 2)
         i = 0
         for d in self.ground_state_density():
             # print(d)
@@ -119,8 +121,8 @@ class alphamodel():
 
     def chi_2_lvl(self):
         return self.Gamma_e * (self.Gamma_e + self.gamma_eg) / (
-                    (self.Gamma_e + self.gamma_eg) ** 2 + 2 * self.Omega_p ** 2 * (
-                        self.Gamma_e + self.gamma_eg) / self.Gamma_e)
+                (self.Gamma_e + self.gamma_eg) ** 2 + 2 * self.Omega_p ** 2 * (
+                self.Gamma_e + self.gamma_eg) / self.Gamma_e)
 
     # def chi_3_lvl(self):
     # return self.Gamma_e/(4*np.pi*self.gamma_eg+np.pi*self.Omega_c**2/self.gamma_gr)
@@ -133,7 +135,7 @@ class alphamodel():
 
     def integrand(self):
         return chi_0 * self.ground_state_density() * self.f_ir() * self.chi_2_lvl() * (
-                    (self.chi_3_lvl() / self.chi_2_lvl() + self.f_bl()) / (1 + self.f_bl()) - 1)
+                (self.chi_3_lvl() / self.chi_2_lvl() + self.f_bl()) / (1 + self.f_bl()) - 1)
 
     def alpha(self):
         return np.e ** (integrate.simps(self.integrand(), self.z_grid))
@@ -141,40 +143,40 @@ class alphamodel():
     def min_counts_e(self):
         return 0.5 * (np.sqrt(
             16 * self.sigma_r ** 2 / (1 - self.alpha()) ** 2 + ((self.alpha() + 3) / (1 - self.alpha()) ** 2) ** 2) + (
-                                  self.alpha() + 3) / (1 - self.alpha()) ** 2)
+                              self.alpha() + 3) / (1 - self.alpha()) ** 2)
 
     def min_counts_i(self):
         return self.alpha() * self.min_counts_e()
 
     def min_counts_raw(self):
         return self.min_counts_e() / self.Q_E * np.e ** (integrate.simps(
-            chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
-                        1 + self.f_bl()), self.z_grid))
+            self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
+                    1 + self.f_bl()), self.z_grid))
 
     def transmission_simple_eit(self):
         return np.e ** (integrate.simps(
-            -chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl_simple()) / (
-                        1 + self.f_bl_simple()), self.z_grid))
+            -self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl_simple()) / (
+                    1 + self.f_bl_simple()), self.z_grid))
 
     def transmission_eit(self):
         return np.e ** (integrate.simps(
-            -chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
-                        1 + self.f_bl()), self.z_grid))
+            -self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
+                    1 + self.f_bl()), self.z_grid))
 
     def transmission_single_eit(self):
-        return np.e ** (integrate.simps(-chi_0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
+        return np.e ** (integrate.simps(-self.chi_0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
 
     def transmission_2lvl(self):
-        return np.e ** (integrate.simps(-chi_0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
+        return np.e ** (integrate.simps(-self.chi_0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
 
     def iterate(self, density):
-        self.twolvl_list = []
+        twolvl_list = []
         self.simple_eit_list = []
         self.single_eit_list = []
         self.eit_list = []
         for n in density:
             self.n_0 = n
-            self.twolvl_list.append(self.transmission_2lvl())
+            twolvl_list.append(self.transmission_2lvl())
             self.simple_eit_list.append(self.transmission_simple_eit())
             self.single_eit_list.append(self.transmission_single_eit())
             self.eit_list.append(self.transmission_eit())
@@ -208,7 +210,9 @@ class alphamodel():
         # self.n_0=old_n_0
 
         elif old_count_ratio > new_count_ratio or old_count_ratio > new_count_ratio * np.random.uniform(0,
-                                                                                                        1):  # self.alpha()<old_alpha or self.alpha()<old_alpha*np.random.uniform(0,1)# and self.min_counts_raw()/self.n_counts()<100:
+                                                                                                        1):  # self
+            # .alpha()<old_alpha or self.alpha()<old_alpha*np.random.uniform(0,1)# and self.min_counts_raw(
+            # )/self.n_counts()<100:
             # print("Accept")
             if new_count_ratio < 5000:
                 self.Omega_p_list.append(self.Omega_p)
