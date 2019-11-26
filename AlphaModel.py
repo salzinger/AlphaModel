@@ -1,3 +1,5 @@
+import numpy as np
+import scipy.integrate as integrate
 # Parameters in MHz
 # l=[]
 # for n in range(0,50):
