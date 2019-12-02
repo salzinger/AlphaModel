@@ -138,6 +138,7 @@ class AlphaModel:
         return np.e ** (integrate.simps(- self.chi0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
 
     def iterate(self, density):
+        print('HI')
         self.twolvl_list = []
         self.simple_eit_list = []
         self.single_eit_list = []
