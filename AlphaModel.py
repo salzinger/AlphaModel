@@ -2,7 +2,7 @@ import numpy as np
 import scipy.integrate as integrate
 
 
-class AlphaModel:
+class AlphaModel1:
     def __init__(self, Omega_p, Omega_c, gamma_eg, gamma_gr, Gamma_e, Q_E, n_0, sigma_z, sigma_r, C_3, C_6, N_i):
         self.Omega_p = Omega_p
         self.Omega_c = Omega_c
@@ -37,7 +37,7 @@ class AlphaModel:
         self.peak_f_bl_list = []
 
     def n_counts(self):
-        return (self.Omega_p / 2.392) ** 2  # in counts per pixel per microsecond
+        return (self.Omega_p / 2.392) ** 5  # in counts per pixel per microsecond
 
     def rho_0(self):
         return self.Omega_p ** 2 / self.Omega_c ** 2
@@ -70,7 +70,7 @@ class AlphaModel:
                 self.Gamma_e * self.Omega_c ** 2 + self.gamma_eg * self.Omega_p ** 2)
         i = 0
         for d in self.ground_state_density():
-            # print(d)
+            #print(d)
             Dint = self.C_6 * (4 / 3 * np.pi * d / Ns) ** 2
             l = 4 * self.gamma_eg * Dint ** 2 * (self.Gamma_e * self.gamma_eg + 2 * self.Omega_p)
             self_con = (1 - l / (l + l1)) * ((Ns - 1) * self.rho_0() + 2) - 1
@@ -79,9 +79,9 @@ class AlphaModel:
             try:
                 zero_crossings[i] = Ns[np.where(np.diff(np.signbit(self_con)))[0]][0] * self.rho_0()
             except:
-                None
+                print('no zero')
             i += 1
-        # print('zero crossings',zero_crossings)
+        #print('zero crossings',zero_crossings)
         return zero_crossings
 
     def f_ir(self):
@@ -135,10 +135,9 @@ class AlphaModel:
         return np.e ** (integrate.simps(- self.chi0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
 
     def transmission_2lvl(self):
-        return np.e ** (integrate.simps(- self.chi0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
+        return np.e ** (integrate.simps(- 100000*self.chi0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
 
     def iterate(self, density):
-        print('HI')
         self.twolvl_list = []
         self.simple_eit_list = []
         self.single_eit_list = []
