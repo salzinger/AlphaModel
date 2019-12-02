@@ -2,7 +2,7 @@ import numpy as np
 import scipy.integrate as integrate
 
 
-class AlphaModel1:
+class AlphaModel:
     def __init__(self, Omega_p, Omega_c, gamma_eg, gamma_gr, Gamma_e, Q_E, n_0, sigma_z, sigma_r, C_3, C_6, N_i):
         self.Omega_p = Omega_p
         self.Omega_c = Omega_c
@@ -37,7 +37,7 @@ class AlphaModel1:
         self.peak_f_bl_list = []
 
     def n_counts(self):
-        return (self.Omega_p / 2.392) ** 5  # in counts per pixel per microsecond
+        return (self.Omega_p / 2.392) ** 2  # in counts per pixel per microsecond
 
     def rho_0(self):
         return self.Omega_p ** 2 / self.Omega_c ** 2
@@ -135,7 +135,7 @@ class AlphaModel1:
         return np.e ** (integrate.simps(- self.chi0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
 
     def transmission_2lvl(self):
-        return np.e ** (integrate.simps(- 100000*self.chi0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
+        return np.e ** (integrate.simps(- self.chi0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
 
     def iterate(self, density):
         self.twolvl_list = []
