@@ -17,7 +17,7 @@ class AlphaModel:
         self.C_6 = C_6
         self.Q_E = Q_E
         self.z_grid = np.linspace(-200, 200, 401)
-        self.chi_0 = 3 / (2 * np.pi) * 0.78 * 0.78 / (2 * np.pi / 0.78)  # um^3
+        self.chi0 = 3 / (2 * np.pi) * 0.78 * 0.78 / (2 * np.pi / 0.78)  # um^3
 
         self.step_count = 0
         self.rejected_values = 0
@@ -79,7 +79,7 @@ class AlphaModel:
             try:
                 zero_crossings[i] = Ns[np.where(np.diff(np.signbit(self_con)))[0]][0] * self.rho_0()
             except:
-
+                None
             i += 1
         # print('zero crossings',zero_crossings)
         return zero_crossings
@@ -102,7 +102,7 @@ class AlphaModel:
         return 2 * self.gamma_gr / (self.gamma_gr * (self.Gamma_e + self.gamma_eg) + self.Omega_c ** 2)
 
     def integrand(self):
-        return self.chi_0 * self.ground_state_density() * self.f_ir() * self.chi_2_lvl() * (
+        return self.chi0 * self.ground_state_density() * self.f_ir() * self.chi_2_lvl() * (
                 (self.chi_3_lvl() / self.chi_2_lvl() + self.f_bl()) / (1 + self.f_bl()) - 1)
 
     def alpha(self):
@@ -118,24 +118,24 @@ class AlphaModel:
 
     def min_counts_raw(self):
         return self.min_counts_e() / self.Q_E * np.e ** (integrate.simps(
-            self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
+            self.chi0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
                     1 + self.f_bl()), self.z_grid))
 
     def transmission_simple_eit(self):
         return np.e ** (integrate.simps(
-            - self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl_simple()) / (
+            - self.chi0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl_simple()) / (
                     1 + self.f_bl_simple()), self.z_grid))
 
     def transmission_eit(self):
         return np.e ** (integrate.simps(
-            - self.chi_0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
+            - self.chi0 * self.ground_state_density() * (self.chi_3_lvl() + self.chi_2_lvl() * self.f_bl()) / (
                     1 + self.f_bl()), self.z_grid))
 
     def transmission_single_eit(self):
-        return np.e ** (integrate.simps(- self.chi_0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
+        return np.e ** (integrate.simps(- self.chi0 * self.ground_state_density() * (self.chi_3_lvl()), self.z_grid))
 
     def transmission_2lvl(self):
-        return np.e ** (integrate.simps(- self.chi_0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
+        return np.e ** (integrate.simps(- self.chi0 * self.ground_state_density() * self.chi_2_lvl(), self.z_grid))
 
     def iterate(self, density):
         self.twolvl_list = []
